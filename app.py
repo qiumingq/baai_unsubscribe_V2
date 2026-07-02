@@ -50,18 +50,20 @@ SMTP_USER = os.environ.get("SMTP_USER", "")
 SMTP_PASS = os.environ.get("SMTP_PASS", "")
 NOTIFY_TO = os.environ.get("NOTIFY_TO", "")
 
-# ---------- 简单的退订Token校验（占位实现，建议替换为签名校验或数据库比对） ----------
+import hmac
+import hashlib
+
+UNSUB_SECRET = os.environ.get("UNSUB_SECRET", "baai-cfts-2026-temp-key")
+
+def generate_token(email: str, campaign_id: str) -> str:
+    msg = f"{email}:{campaign_id}".encode()
+    return hmac.new(UNSUB_SECRET.encode(), msg, hashlib.sha256).hexdigest()
+
 def verify_token(email: str, token: str, campaign_id: str) -> bool:
-    """
-    校验退订链接中的token是否有效。
-    当前为占位实现：仅校验token非空。
-    生产环境建议：
-    1. 生成链接时用 HMAC(secret, email+campaign_id) 作为token，此处重新计算并比对；
-    2. 或在数据库中记录token与email的映射，查库比对。
-    """
     if not token or not email:
         return False
-    return True
+    expected = generate_token(email, campaign_id)
+    return hmac.compare_digest(expected, token)
 
 
 def forward_to_email(record):
