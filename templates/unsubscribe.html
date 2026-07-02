@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>退订确认 - BAAI CFTS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Lora:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-primary:#FAF9F5;
+    --bg-secondary:#F0EDE4;
+    --bg-dark:#141413;
+    --text-primary:#1A1916;
+    --text-secondary:#6B6861;
+    --text-muted:#A09E96;
+    --accent-orange:#D97757;
+    --border:#E8E6DC;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family:'Inter','-apple-system',sans-serif;
+    background:var(--bg-primary);
+    margin:0;
+    padding:0;
+    color:var(--text-primary);
+  }
+  .masthead{
+    background:var(--bg-dark);
+    padding:20px 40px;
+    max-width:600px;
+    margin:0 auto;
+  }
+  .masthead .brand{
+    color:#fff;
+    font-family:'Poppins',sans-serif;
+    font-weight:700;
+    font-size:16px;
+    letter-spacing:0.5px;
+  }
+  .masthead .kicker{
+    color:var(--accent-orange);
+    font-family:'Inter',sans-serif;
+    font-weight:500;
+    font-size:11px;
+    letter-spacing:1px;
+    margin-top:2px;
+  }
+  .card{
+    max-width:600px;
+    margin:0 auto;
+    background:var(--bg-primary);
+    padding:36px 40px 40px;
+  }
+  h1{
+    font-family:'Poppins',sans-serif;
+    font-weight:700;
+    font-size:22px;
+    color:var(--text-primary);
+    margin:0 0 10px 0;
+  }
+  p.sub{
+    font-family:'Lora',serif;
+    font-style:italic;
+    font-size:14px;
+    line-height:1.7;
+    color:var(--text-secondary);
+    margin:0 0 24px 0;
+    border-left:2px solid var(--accent-orange);
+    padding-left:14px;
+  }
+  .email-box{
+    background:var(--bg-secondary);
+    border-radius:8px;
+    padding:12px 16px;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    color:var(--text-primary);
+    margin-bottom:28px;
+  }
+  fieldset{border:none;padding:0;margin:0 0 24px 0;}
+  legend{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:11px;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    color:var(--accent-orange);
+    margin-bottom:14px;
+    padding:0;
+  }
+  .field-group{margin-bottom:16px;}
+  .field-group label{
+    display:block;
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    font-weight:500;
+    color:var(--text-primary);
+    margin-bottom:6px;
+  }
+  .field-group input[type="text"]{
+    width:100%;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:11px 12px;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    color:var(--text-primary);
+    background:var(--bg-primary);
+  }
+  .field-group input[type="text"]::placeholder{color:var(--text-muted);}
+  .field-note{
+    font-family:'Lora',serif;
+    font-style:italic;
+    font-size:12px;
+    line-height:1.6;
+    color:var(--text-secondary);
+    background:var(--bg-secondary);
+    border-radius:8px;
+    padding:12px 14px;
+    margin-bottom:24px;
+  }
+  label.reason{
+    display:block;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    color:var(--text-primary);
+    padding:10px 0;
+    border-bottom:1px solid var(--border);
+    cursor:pointer;
+  }
+  label.reason:last-of-type{border-bottom:none;}
+  label.reason input{
+    margin-right:10px;
+    accent-color:var(--accent-orange);
+  }
+  textarea{
+    width:100%;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:12px;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    color:var(--text-primary);
+    background:var(--bg-primary);
+    resize:vertical;
+    min-height:70px;
+    margin-top:14px;
+  }
+  textarea::placeholder{color:var(--text-muted);}
+  button{
+    width:100%;
+    background:var(--accent-orange);
+    color:#fff;
+    border:none;
+    border-radius:8px;
+    padding:13px 0;
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    margin-top:8px;
+  }
+  button:hover{background:#c56546;}
+  .resub{
+    text-align:center;
+    margin-top:18px;
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+  }
+  .resub a{color:var(--accent-orange);text-decoration:none;font-weight:500;}
+  .success{display:none;text-align:center;padding:50px 0;}
+  .success h2{
+    font-family:'Poppins',sans-serif;
+    font-weight:700;
+    color:var(--text-primary);
+    font-size:20px;
+  }
+  .success p{
+    font-family:'Lora',serif;
+    font-style:italic;
+    color:var(--text-secondary);
+    font-size:14px;
+  }
+  .footer-note{
+    font-family:'Inter',sans-serif;
+    font-size:11px;
+    color:var(--text-muted);
+    margin-top:28px;
+    text-align:center;
+    border-top:1px solid var(--border);
+    padding-top:16px;
+  }
+</style>
+</head>
+<body>
+<div class="masthead">
+  <div class="brand">BAAI · CFTS</div>
+  <div class="kicker">UNSUBSCRIBE / VOL 001</div>
+</div>
+
+<div class="card" id="formCard">
+  <h1>确认退订邮件订阅</h1>
+  <p class="sub">很遗憾您想要离开，我们希望改进服务。请确认以下邮箱将不再接收我们的邮件通知：</p>
+  <div class="email-box" id="emailDisplay">正在读取邮箱地址...</div>
+
+  <form id="unsubForm">
+    <fieldset>
+      <legend>基本信息</legend>
+      <div class="field-group">
+        <label for="nameInput">姓名</label>
+        <input type="text" id="nameInput" name="name" placeholder="请填写您的姓名（选填）">
+      </div>
+      <div class="field-group">
+        <label for="orgInput">所属机构</label>
+        <input type="text" id="orgInput" name="organization" placeholder="请填写您的所属机构/单位（选填）">
+      </div>
+      <p class="field-note">以上信息仅用于精准标注退订学者身份，帮助我们核实退订请求并优化学术社群名单管理，不会用于其他任何用途。</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>退订原因（可多选，帮助我们改进）</legend>
+      <label class="reason"><input type="checkbox" name="reason" value="content_irrelevant"> 内容与我的兴趣不相关</label>
+      <label class="reason"><input type="checkbox" name="reason" value="too_frequent"> 邮件发送频率过高</label>
+      <label class="reason"><input type="checkbox" name="reason" value="temporary"> 暂时不需要，未来可能重新订阅</label>
+      <label class="reason"><input type="checkbox" name="reason" value="other"> 其他原因</label>
+      <textarea name="other_text" placeholder="如选择“其他原因”或想补充说明，请在此填写（选填）"></textarea>
+    </fieldset>
+    <button type="submit">确认退订</button>
+  </form>
+
+  <div class="resub">
+    误点了？<a href="#" id="cancelLink">保留订阅</a>
+  </div>
+  <p class="footer-note">我们承诺仅将本页面信息用于退订处理，不会用于其他用途。</p>
+</div>
+
+<div class="card success" id="successCard">
+  <div class="success">
+    <h2>已成功退订</h2>
+    <p>您将不再收到来自 BAAI-CFTS 的邮件。感谢您的反馈，我们会持续改进。</p>
+  </div>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const email = params.get('email') || '未知邮箱';
+const campaign = params.get('cid') || '';
+const token = params.get('token') || '';
+document.getElementById('emailDisplay').textContent = email;
+
+document.getElementById('cancelLink').addEventListener('click', function(e){
+  e.preventDefault();
+  window.close();
+  window.location.href = 'about:blank';
+});
+
+document.getElementById('unsubForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const checked = Array.from(document.querySelectorAll('input[name="reason"]:checked')).map(i=>i.value);
+  const otherText = document.querySelector('textarea[name="other_text"]').value;
+  const name = document.getElementById('nameInput').value;
+  const organization = document.getElementById('orgInput').value;
+
+  const payload = {
+    email: email,
+    campaign_id: campaign,
+    token: token,
+    name: name,
+    organization: organization,
+    reasons: checked,
+    other_text: otherText,
+    timestamp: new Date().toISOString(),
+    user_agent: navigator.userAgent,
+    page_url: window.location.href
+  };
+
+  try{
+    const resp = await fetch('/api/unsubscribe', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if(resp.ok){
+      document.getElementById('formCard').style.display='none';
+      document.getElementById('successCard').style.display='block';
+    } else {
+      alert('提交失败，请稍后重试或直接联系我们。');
+    }
+  }catch(err){
+    alert('网络错误，请稍后重试。');
+  }
+});
+</script>
+</body>
+</html>
