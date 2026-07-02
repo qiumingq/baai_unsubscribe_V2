@@ -162,5 +162,4 @@ def health():
 
 
 if __name__ == "__main__":
-    # 端口必须与 FC 控制台"监听端口"配置一致（当前示例为9000）
-    app.run(host="0.0.0.0", port=9000)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
