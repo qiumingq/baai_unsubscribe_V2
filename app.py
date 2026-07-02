@@ -1,12 +1,14 @@
 """
-BAAI-CFTS 退订收集后端 - 阿里云函数计算 FC Web函数版本
-技术栈：Python + Flask + SQLite(示例) + SMTP转发
-部署方式：阿里云函数计算 FC 自定义运行时（Web函数）
+BAAI-CFTS 退订收集后端 - Render 部署版本
+技术栈：Python + Flask + SQLite + SMTP转发
+Token算法与 batch_mailer.py 的 build_unsubscribe_link 保持一致：
+    token = md5(f"{email}:{campaign_id}")[:16]
 """
 
 from flask import Flask, request, jsonify, render_template
 import sqlite3
 import smtplib
+import hashlib
 from email.mime.text import MIMEText
 from email.header import Header
 import datetime
@@ -50,20 +52,18 @@ SMTP_USER = os.environ.get("SMTP_USER", "")
 SMTP_PASS = os.environ.get("SMTP_PASS", "")
 NOTIFY_TO = os.environ.get("NOTIFY_TO", "")
 
-import hmac
-import hashlib
 
-UNSUB_SECRET = os.environ.get("UNSUB_SECRET", "baai-cfts-2026-temp-key")
-
+# ---------- Token 校验：与 batch_mailer.py 的 build_unsubscribe_link 保持完全一致 ----------
 def generate_token(email: str, campaign_id: str) -> str:
-    msg = f"{email}:{campaign_id}".encode()
-    return hmac.new(UNSUB_SECRET.encode(), msg, hashlib.sha256).hexdigest()
+    """必须和 batch_mailer.py 里的算法完全一致：md5(email:campaign_id)前16位"""
+    return hashlib.md5(f"{email}:{campaign_id}".encode()).hexdigest()[:16]
+
 
 def verify_token(email: str, token: str, campaign_id: str) -> bool:
     if not token or not email:
         return False
     expected = generate_token(email, campaign_id)
-    return hmac.compare_digest(expected, token)
+    return expected == token
 
 
 def forward_to_email(record):
@@ -102,9 +102,9 @@ def forward_to_email(record):
 @app.route("/unsubscribe", methods=["GET"])
 def unsubscribe_page():
     """
-    渲染退订页面。邮件模板中的退订链接应指向：
-    https://<你的FC域名>/unsubscribe?email=xxx&token=xxx&cid=活动编号
-    页面内的JS会自行从URL参数中读取email/token/cid并展示、并在提交时POST到/api/unsubscribe。
+    渲染退订页面。邮件模板中的退订链接由 batch_mailer.py 自动生成，格式为：
+    https://<你的Render域名>/unsubscribe?email=xxx&cid=活动编号&token=xxx
+    页面内的JS会自行从URL参数中读取email/token/cid并展示，并在提交时POST到/api/unsubscribe。
     """
     email = request.args.get("email", "")
     token = request.args.get("token", "")
@@ -113,7 +113,6 @@ def unsubscribe_page():
     if not verify_token(email, token, campaign_id):
         return "退订链接无效或已过期，请联系管理员。", 400
 
-    # 直接渲染 templates/unsubscribe.html（页面内JS会自己读取URL参数，无需服务端注入变量）
     return render_template("unsubscribe.html")
 
 
@@ -122,7 +121,7 @@ def unsubscribe():
     data = request.get_json(force=True)
     email = data.get("email", "")
     token = data.get("token", "")
-    campaign_id = data.get("campaignid", data.get("campaign_id", ""))
+    campaign_id = data.get("cid", data.get("campaign_id", ""))
 
     if not verify_token(email, token, campaign_id):
         return jsonify({"status": "error", "message": "invalid token"}), 400
@@ -134,10 +133,10 @@ def unsubscribe():
         "campaign_id": campaign_id,
         "token": token,
         "reasons": ",".join(data.get("reasons", [])),
-        "other_text": data.get("othertext", data.get("other_text", "")),
-        "user_agent": data.get("useragent", data.get("user_agent", "")),
+        "other_text": data.get("other_text", ""),
+        "user_agent": data.get("user_agent", ""),
         "ip": request.headers.get("X-Forwarded-For", request.remote_addr),
-        "page_url": data.get("pageurl", data.get("page_url", "")),
+        "page_url": data.get("page_url", ""),
         "created_at": datetime.datetime.utcnow().isoformat(),
     }
 
