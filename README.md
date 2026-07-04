@@ -69,7 +69,7 @@ gunicorn -w 4 -b 0.0.0.0:10000 app:app
 
 创建服务配置文件：
 
-sudo nano /etc/systemd/system/baai-unsub.service
+sudo vi /etc/systemd/system/baai-unsub.service
 
 填入以下内容（路径和授权码换成你的真实信息）：
 
@@ -110,7 +110,7 @@ sudo journalctl -u baai-unsub -f
 
 1. 找到目标服务器实例，点击"防火墙"标签
 2. 点击"添加规则"
-3. 应用类型选"自定义"，端口范围填 10000/10000，协议选TCP，来源填 0.0.0.0/0
+3. 应用类型选"自定义"，端口范围填 10000，协议选TCP，来源填 0.0.0.0/0
 4. 保存生效
 
 ### 第八步：配置域名解析
