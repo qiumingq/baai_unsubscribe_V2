@@ -1,8 +1,8 @@
 """
-BAAI-CFTS 退订收集后端 - Render 部署版本
-技术栈：Python + Flask + SQLite + SMTP转发
-Token算法与 batch_mailer.py 的 build_unsubscribe_link 保持一致：
-    token = md5(f"{email}:{campaign_id}")[:16]
+BAAI-CFTS 退订收集后端 - 轻量应用服务器部署版
+技术栈：Python 3.10 + Flask + SQLite + SMTP转发
+Token算法需与你的 batch_mailer.py 里的 build_unsubscribe_link 保持一致：
+token = md5(f"{email}:{campaign_id}")[:16]
 """
 
 from flask import Flask, request, jsonify, render_template
@@ -16,7 +16,10 @@ import os
 
 app = Flask(__name__)
 
-DB_PATH = os.environ.get("DB_PATH", "/tmp/unsubscribe.db")
+DB_PATH = os.environ.get(
+    "DB_PATH",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "unsubscribe.db"),
+)
 
 
 def init_db():
@@ -53,13 +56,13 @@ SMTP_PASS = os.environ.get("SMTP_PASS", "")
 NOTIFY_TO = os.environ.get("NOTIFY_TO", "")
 
 
-# ---------- Token 校验：与 batch_mailer.py 的 build_unsubscribe_link 保持完全一致 ----------
-def generate_token(email: str, campaign_id: str) -> str:
+def generate_token(email, campaign_id):
     """必须和 batch_mailer.py 里的算法完全一致：md5(email:campaign_id)前16位"""
-    return hashlib.md5(f"{email}:{campaign_id}".encode()).hexdigest()[:16]
+    raw = email + ":" + campaign_id
+    return hashlib.md5(raw.encode("utf-8")).hexdigest()[:16]
 
 
-def verify_token(email: str, token: str, campaign_id: str) -> bool:
+def verify_token(email, token, campaign_id):
     if not token or not email:
         return False
     expected = generate_token(email, campaign_id)
@@ -73,17 +76,34 @@ def forward_to_email(record):
 
     subject = "[退订通知] " + (record["name"] or record["email"]) + " 已退订"
     body = (
-        "姓名：" + str(record["name"]) + "\n"
-        + "所属机构：" + str(record["organization"]) + "\n"
-        + "退订邮箱：" + str(record["email"]) + "\n"
-        + "活动编号：" + str(record["campaign_id"]) + "\n"
-        + "退订原因：" + str(record["reasons"]) + "\n"
-        + "补充说明：" + str(record["other_text"]) + "\n"
-        + "提交时间：" + str(record["created_at"]) + "\n"
-        + "IP地址：" + str(record["ip"]) + "\n"
-        + "User-Agent：" + str(record["user_agent"]) + "\n"
+        "姓名："
+        + str(record["name"])
+        + "\n"
+        + "所属机构："
+        + str(record["organization"])
+        + "\n"
+        + "退订邮箱："
+        + str(record["email"])
+        + "\n"
+        + "活动编号："
+        + str(record["campaign_id"])
+        + "\n"
+        + "退订原因："
+        + str(record["reasons"])
+        + "\n"
+        + "补充说明："
+        + str(record["other_text"])
+        + "\n"
+        + "提交时间："
+        + str(record["created_at"])
+        + "\n"
+        + "IP地址："
+        + str(record["ip"])
+        + "\n"
+        + "User-Agent："
+        + str(record["user_agent"])
+        + "\n"
     )
-
     msg = MIMEText(body, "plain", "utf-8")
     msg["Subject"] = Header(subject, "utf-8")
     msg["From"] = SMTP_USER
@@ -102,8 +122,8 @@ def forward_to_email(record):
 @app.route("/unsubscribe", methods=["GET"])
 def unsubscribe_page():
     """
-    渲染退订页面。邮件模板中的退订链接由 batch_mailer.py 自动生成，格式为：
-    https://<你的Render域名>/unsubscribe?email=xxx&cid=活动编号&token=xxx
+    渲染退订页面。邮件模板中的退订链接格式为：
+    https://你的域名/unsubscribe?email=xxx&cid=活动编号&token=xxx
     页面内的JS会自行从URL参数中读取email/token/cid并展示，并在提交时POST到/api/unsubscribe。
     """
     email = request.args.get("email", "")
